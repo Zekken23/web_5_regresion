@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Single Test Prediksi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-glow: #00e5ff; --secondary-glow: #0077ff; }
+        body { font-family: 'Poppins', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+        .navbar { background: rgba(15, 23, 42, 0.8) !important; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .navbar-brand { font-weight: 700; background: -webkit-linear-gradient(135deg, var(--primary-glow), var(--secondary-glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; color: #fff; }
+        .card-header { background: rgba(0,0,0,0.2) !important; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; font-size: 1.2rem; border-top-left-radius: 16px !important; border-top-right-radius: 16px !important; }
+        
+        /* Form Inputs Custom */
+        .form-control, .form-select { background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; transition: all 0.3s; }
+        .form-control:focus, .form-select:focus { background-color: rgba(0,0,0,0.5); border-color: var(--primary-glow); box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); color: #fff; }
+        label { font-size: 0.9rem; color: #cbd5e1; margin-bottom: 0.3rem; }
+        
+        /* Button Custom */
+        .btn-gradient { background: linear-gradient(135deg, var(--primary-glow) 0%, var(--secondary-glow) 100%); border: none; color: #fff; font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.3s; }
+        .btn-gradient:hover { box-shadow: 0 5px 20px rgba(0, 229, 255, 0.4); transform: scale(1.02); color: #fff; }
+        
+        /* Tombol Randomize */
+        .btn-random { background: transparent; border: 2px solid var(--primary-glow); color: var(--primary-glow); font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.3s; }
+        .btn-random:hover { background: rgba(0, 229, 255, 0.1); box-shadow: 0 0 15px rgba(0, 229, 255, 0.3); color: #fff; transform: scale(1.02); }
+
+        /* Result Box */
+        .result-box { background: rgba(0, 229, 255, 0.1); border: 1px solid var(--primary-glow); border-radius: 16px; padding: 2rem; text-align: center; margin-top: 2rem; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); animation: popIn 0.5s ease forwards; }
+        .result-value { font-size: 3.5rem; font-weight: 700; color: var(--primary-glow); text-shadow: 0 0 10px rgba(0, 229, 255, 0.5); }
+        
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .fade-in { animation: popIn 0.6s ease forwards; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark mb-5">
+  <div class="container">
+    <a class="navbar-brand" href="/">⚙️ AI Analytics Dashboard</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active fw-bold text-white" href="/single_test">Single Test</a></li>
+        <li class="nav-item"><a class="nav-link" href="/batch_test">Batch Test</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+    <div class="row justify-content-center fade-in">
+        <div class="col-md-9">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header text-center py-3">Simulator Prediksi Single Data</div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        <div class="row g-3" id="form-inputs">
+                            {% for f in num_features %}
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">{{ f|replace('_', ' ') }}</label>
+                                <input type="number" step="any" class="form-control num-input" name="{{ f }}" placeholder="Masukkan nilai..." required>
+                            </div>
+                            {% endfor %}
+
+                            {% for f in cat_features %}
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">{{ f|replace('_', ' ') }}</label>
+                                <select class="form-select cat-select" name="{{ f }}" required>
+                                    <option value="" disabled>Pilih Kategori...</option>
+                                    {% for val in encoders[f].classes_ %}
+                                    <option value="{{ val }}">{{ val }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <button type="button" class="btn btn-random w-100 fs-5" id="btnRandom">🎲 Randomize</button>
+                            </div>
+                            <div class="col-md-8">
+                                <button type="submit" class="btn btn-gradient w-100 fs-5">⚡ Jalankan Prediksi</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if prediction is not none %}
+            <div class="result-box" id="result-container">
+                <h4 class="text-white mb-2">Estimasi Kehilangan Pupuk</h4>
+                <div class="result-value">{{ prediction }} %</div>
+                <p class="text-secondary mt-2">Dihitung menggunakan XGBoost Model</p>
+            </div>
+            <script>
+                // Auto scroll to result
+                document.getElementById('result-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            </script>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Logika untuk Randomize Input
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnRandom = document.getElementById('btnRandom');
+        const numInputs = document.querySelectorAll('.num-input');
+        const catSelects = document.querySelectorAll('.cat-select');
+
+        function randomizeData() {
+            // 1. Acak Data Numerik (Angka antara 10.00 hingga 100.00)
+            // Kamu bisa mengubah rentang angka pengali di bawah ini sesuai kebutuhan datamu
+            numInputs.forEach(input => {
+                const randomNum = (Math.random() * 90 + 10).toFixed(2); 
+                input.value = randomNum;
+            });
+
+            // 2. Acak Data Kategorik (Memilih opsi secara acak)
+            catSelects.forEach(select => {
+                // Ambil semua opsi kecuali yang atributnya 'disabled' (Pilih Kategori...)
+                const validOptions = select.querySelectorAll('option:not([disabled])');
+                if (validOptions.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * validOptions.length);
+                    validOptions[randomIndex].selected = true;
+                }
+            });
+        }
+
+        // Eksekusi fungsi sekali saat halaman pertama kali dibuka (Sebagai Prefill Default)
+        randomizeData();
+
+        // Eksekusi ulang saat tombol ditekan
+        btnRandom.addEventListener('click', randomizeData);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Batch Test Prediksi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-glow: #00e5ff; --secondary-glow: #0077ff; }
+        body { font-family: 'Poppins', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+        .navbar { background: rgba(15, 23, 42, 0.8) !important; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .navbar-brand { font-weight: 700; background: -webkit-linear-gradient(135deg, var(--primary-glow), var(--secondary-glow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; color: #fff; transition: all 0.3s; }
+        .card-header { background: rgba(0,0,0,0.2) !important; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; font-size: 1.2rem; border-top-left-radius: 16px !important; border-top-right-radius: 16px !important; }
+        
+        /* File Upload Custom */
+        .upload-area { border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 3rem 2rem; background: rgba(0,0,0,0.2); transition: all 0.3s ease; cursor: pointer; }
+        .upload-area:hover { border-color: var(--primary-glow); background: rgba(0, 229, 255, 0.05); }
+        .form-control[type="file"] { display: none; }
+        
+        /* Buttons */
+        .btn-gradient { background: linear-gradient(135deg, var(--primary-glow) 0%, var(--secondary-glow) 100%); border: none; color: #fff; font-weight: 600; padding: 12px 24px; border-radius: 8px; transition: all 0.3s; }
+        .btn-gradient:hover { box-shadow: 0 5px 20px rgba(0, 229, 255, 0.4); transform: scale(1.02); color: #fff; }
+        .btn-success-glow { background: linear-gradient(135deg, #00b09b, #96c93d); border: none; color: #fff; font-weight: 600; padding: 12px; border-radius: 8px; transition: all 0.3s; }
+        .btn-success-glow:hover { box-shadow: 0 5px 20px rgba(0, 176, 155, 0.4); transform: scale(1.02); }
+
+        /* Table Result */
+        .table { color: #cbd5e1; font-size: 0.9rem; }
+        .table-bordered { border-color: rgba(255,255,255,0.1); }
+        thead { background-color: rgba(0,0,0,0.4); color: var(--primary-glow); }
+
+        .fade-in { animation: fadeIn 0.6s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark mb-5">
+  <div class="container">
+    <a class="navbar-brand" href="/">⚙️ AI Analytics Dashboard</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/single_test">Single Test</a></li>
+        <li class="nav-item"><a class="nav-link active fw-bold text-white" href="/batch_test">Batch Test</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+    <div class="row justify-content-center fade-in">
+        <div class="col-md-10">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header text-center py-3">📂 Prediksi Massal (Batch Processing)</div>
+                <div class="card-body text-center p-5">
+                    <p class="text-secondary mb-4 fs-5">Unggah dataset CSV berisi kolom fitur model untuk memproses ribuan baris data secara instan.</p>
+                    
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <label class="upload-area w-100 d-block mb-4" for="fileInput">
+                            <h1 style="font-size: 3rem; color: #00e5ff;">📄</h1>
+                            <h5 class="mt-3 text-white">Klik atau Drag file CSV ke sini</h5>
+                            <span class="text-secondary" id="fileName">Format yang didukung: .csv</span>
+                        </label>
+                        <input type="file" class="form-control" name="file" id="fileInput" accept=".csv" required>
+                        
+                        <button class="btn btn-gradient btn-lg px-5" type="submit" id="submitBtn">
+                            🚀 Proses Data Sekarang
+                        </button>
+                    </form>
+
+                    {% if error %}
+                    <div class="alert alert-danger mt-4 mb-0 text-start" role="alert">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                    {% if result_html %}
+                    <hr class="my-5 border-secondary">
+                    <h5 class="text-start text-info mb-3">Preview Hasil Analisis (10 Baris Pertama):</h5>
+                    <div class="table-responsive text-start mb-4 rounded border border-secondary" style="max-height: 400px; overflow-y: auto;">
+                        {{ result_html | safe }}
+                    </div>
+                    
+                    <a href="/download" class="btn btn-success-glow btn-lg w-100 mt-2">
+                        📥 Download Hasil Prediksi (.csv)
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JS for showing selected file name
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    
+    fileInput.addEventListener('change', function(e) {
+        if(e.target.files.length > 0) {
+            fileName.textContent = "File terpilih: " + e.target.files[0].name;
+            fileName.style.color = "#00e5ff";
+        }
+    });
+</script>
+</body>
+</html>

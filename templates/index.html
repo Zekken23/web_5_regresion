@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agro Fertilizer Loss Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #060708;
+            --panel: #171a1d;
+            --panel-soft: #1f2428;
+            --line: #2c3338;
+            --text: #f4f7f8;
+            --muted: #90999f;
+            --blue: #0b7cf5;
+            --green: #32df86;
+            --cyan: #22c6da;
+            --violet: #8052ff;
+            --yellow: #f2c94c;
+            --danger: #ff5f6d;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            letter-spacing: 0;
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 254px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            border-right: 1px solid var(--line);
+            padding: 38px 18px 20px;
+            background: #020303;
+            display: flex;
+            flex-direction: column;
+            gap: 26px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 16px;
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        .brand-icon, .nav-icon, .mini-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: inline-grid;
+            place-items: center;
+            background: rgba(11, 124, 245, 0.16);
+            color: var(--blue);
+            flex: 0 0 auto;
+        }
+
+        .nav-group-label {
+            padding: 0 2px;
+            margin: 0 0 6px;
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .nav-list { display: grid; gap: 8px; }
+
+        .nav-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            background: transparent;
+            color: var(--text);
+            font-size: 16px;
+            text-align: left;
+        }
+
+        .nav-button:hover, .nav-button.active { background: #10355f; }
+
+        .sidebar-footer {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--muted);
+            padding: 0 16px;
+        }
+
+        .nlp-pill {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 10px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--green), var(--blue));
+            color: #fff;
+        }
+
+        .main {
+            padding: 48px min(5vw, 64px);
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .page { display: none; gap: 28px; }
+        .page.active { display: grid; }
+        .page > div { min-width: 0; }
+        .two-column { grid-template-columns: minmax(0, 1fr) 376px; align-items: start; }
+
+        .section-title {
+            font-size: 24px;
+            line-height: 1.1;
+            margin: 0 0 14px;
+            font-weight: 850;
+        }
+
+        .muted { color: var(--muted); }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            margin-bottom: 36px;
+        }
+
+        .metric-card, .panel, .side-card {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 20px;
+        }
+
+        .metric-card {
+            min-height: 216px;
+            padding: 28px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card.blue { background: linear-gradient(135deg, #0878ef, #088af7); }
+        .metric-card.violet { background: linear-gradient(135deg, #7a2bd9, #842fd0); }
+        .metric-card.green { background: linear-gradient(135deg, #33df88, #3ae289); color: #f9fffb; }
+
+        .metric-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .metric-title {
+            font-size: 17px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .metric-subtitle {
+            font-size: 13px;
+            opacity: .74;
+            margin: 2px 0 0;
+        }
+
+        .big-number {
+            font-size: 28px;
+            font-weight: 850;
+            margin-bottom: 12px;
+        }
+
+        .metric-split {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .metric-split strong {
+            display: block;
+            color: #fff;
+            font-size: 16px;
+            margin-top: 4px;
+        }
+
+        .chip-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .chip {
+            border-radius: 999px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.84);
+            font-size: 12px;
+        }
+
+        .panel { padding: 28px; margin-bottom: 28px; }
+        .panel, .prediction-card, .chart-wrap { min-width: 0; max-width: 100%; }
+        .chart-wrap { min-height: 330px; position: relative; overflow: hidden; }
+        canvas { max-width: 100%; }
+        .side-stack { display: grid; gap: 16px; }
+        .side-card { padding: 26px 24px; }
+
+        .pipeline-list { display: grid; gap: 15px; margin-top: 22px; }
+        .pipeline-item {
+            display: grid;
+            grid-template-columns: 34px 1fr 42px;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: #169a57;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .pipeline-item.now .step-number { background: var(--blue); }
+        .step-title { font-size: 15px; font-weight: 800; }
+        .step-desc { font-size: 12px; color: var(--muted); }
+        .step-state { color: var(--green); font-weight: 900; font-size: 12px; }
+
+        .model-list { display: grid; gap: 16px; margin-top: 20px; }
+        .model-row {
+            display: grid;
+            grid-template-columns: 10px 1fr auto;
+            gap: 10px;
+            align-items: start;
+            border-bottom: 4px solid var(--violet);
+            padding-bottom: 10px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 6px;
+            background: var(--violet);
+        }
+
+        .model-row:nth-child(2) { border-color: #a75cff; }
+        .model-row:nth-child(2) .dot { background: #a75cff; }
+        .model-row:nth-child(3) { border-color: var(--cyan); }
+        .model-row:nth-child(3) .dot { background: var(--cyan); }
+        .model-row:nth-child(4) { border-color: var(--green); }
+        .model-row:nth-child(4) .dot { background: var(--green); }
+        .model-name { font-weight: 800; font-size: 15px; }
+        .model-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+        .model-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+        .table-dark-custom {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .table-dark-custom th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 0 14px 6px;
+            white-space: nowrap;
+        }
+
+        .table-dark-custom td {
+            background: var(--panel-soft);
+            padding: 14px;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        .table-dark-custom td:first-child {
+            border-radius: 8px 0 0 8px;
+            font-weight: 850;
+            color: var(--cyan);
+        }
+
+        .table-dark-custom td:last-child { border-radius: 0 8px 8px 0; }
+        .table-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 8px;
+        }
+
+        .table-scroll .table-dark-custom {
+            min-width: max-content;
+        }
+
+        .batch-chart-panel {
+            background: #101315;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .form-control, .form-select, .form-control:focus, .form-select:focus {
+            background: #101315;
+            color: var(--text);
+            border: 1px solid var(--line);
+            box-shadow: none;
+        }
+
+        .form-control::placeholder { color: #6d7479; }
+        .form-select option { background: #101315; color: var(--text); }
+
+        .btn-primary-custom {
+            background: var(--green);
+            color: #07100c;
+            border: 0;
+            border-radius: 8px;
+            font-weight: 850;
+            padding: 12px 16px;
+        }
+
+        .btn-secondary-custom {
+            background: var(--panel-soft);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-weight: 750;
+            padding: 12px 16px;
+        }
+
+        .prediction-card {
+            border-left: 4px solid var(--green);
+            background: #101315;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 18px;
+        }
+
+        .prediction-title {
+            font-size: 22px;
+            font-weight: 850;
+            margin: 0 0 8px;
+        }
+
+        .sample-grid, .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(280px, 1fr));
+            gap: 18px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .sample-card, .stat-card {
+            background: var(--panel-soft);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .sample-card h4, .stat-card h4 {
+            font-size: 15px;
+            margin-bottom: 12px;
+            font-weight: 850;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: 900;
+            color: var(--green);
+        }
+
+        .score-list { display: grid; gap: 16px; }
+        .score-row {
+            display: grid;
+            grid-template-columns: 190px 1fr 82px;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .score-label { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+        .score-track {
+            height: 12px;
+            border-radius: 999px;
+            background: #2a3035;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+        }
+
+        .score-value {
+            text-align: right;
+            font-weight: 900;
+            color: var(--green);
+        }
+
+        .upload-area {
+            display: grid;
+            place-items: center;
+            gap: 8px;
+            min-height: 180px;
+            border: 1px dashed var(--line);
+            border-radius: 12px;
+            background: #101315;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .upload-area:hover { border-color: var(--green); }
+        .file-input { display: none; }
+
+        @media (max-width: 1180px) {
+            .summary-grid, .two-column { grid-template-columns: 1fr; }
+            .side-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 820px) {
+            .app-shell { grid-template-columns: 1fr; }
+            .sidebar { position: relative; height: auto; padding: 20px; }
+            .nav-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .main { padding: 28px 18px; }
+            .side-stack, .sample-grid, .stat-grid, .category-grid { grid-template-columns: 1fr; }
+            .metric-split { grid-template-columns: 1fr; }
+            .score-row { grid-template-columns: 1fr; }
+            .score-value { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-icon"><i class="fa-solid fa-seedling"></i></span>
+                <span>Agro Loss AI</span>
+            </div>
+
+            <div>
+                <p class="nav-group-label">Analisis Regresi</p>
+                <div class="nav-list">
+                    <button class="nav-button active" data-page="overview"><span class="nav-icon"><i class="fa-solid fa-table-cells-large"></i></span>Overview</button>
+                    <button class="nav-button" data-page="dataset"><span class="nav-icon"><i class="fa-solid fa-database"></i></span>Dataset</button>
+                    <button class="nav-button" data-page="features"><span class="nav-icon"><i class="fa-solid fa-list-ol"></i></span>Fitur</button>
+                    <button class="nav-button" data-page="metrics"><span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>Metrik</button>
+                    <button class="nav-button" data-page="prediction"><span class="nav-icon"><i class="fa-solid fa-clipboard-check"></i></span>Single Test</button>
+                    <button class="nav-button" data-page="batch"><span class="nav-icon"><i class="fa-solid fa-file-csv"></i></span>Batch Test</button>
+                </div>
+            </div>
+
+            <div>
+                <p class="nav-group-label">Laporan</p>
+                <div class="nav-list">
+                    <button class="nav-button" data-page="report"><span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span>Hasil</button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <i class="fa-solid fa-gear"></i>
+                <i class="fa-solid fa-filter"></i>
+                <span class="nlp-pill">REG</span>
+            </div>
+        </aside>
+
+        <main class="main">
+            <section id="overview" class="page active two-column">
+                <div>
+                    <h1 class="section-title">Ringkasan Pipeline Regresi</h1>
+                    <div class="summary-grid">
+                        <article class="metric-card blue">
+                            <div class="metric-head">
+                                <span class="mini-icon"><i class="fa-solid fa-database"></i></span>
+                                <div>
+                                    <p class="metric-title">AgroFertilizerLoss</p>
+                                    <p class="metric-subtitle">Dataset fertilizer loss</p>
+                                </div>
+                            </div>
+                            <div class="big-number">{{ dashboard.summary.total_rows }}</div>
+                            <div class="metric-split">
+                                <span>Clean<strong>{{ dashboard.summary.clean_rows }}</strong></span>
+                                <span>Kolom<strong>{{ dashboard.summary.total_columns }}</strong></span>
+                                <span>Fitur<strong>{{ dashboard.summary.feature_count }}</strong></span>
+                            </div>
+                        </article>
+
+                        <article class="metric-card violet">
+                            <div class="metric-head">
+                                <span class="mini-icon"><i class="fa-solid fa-diagram-project"></i></span>
+                                <div>
+                                    <p class="metric-title">Preprocessing</p>
+                                    <p class="metric-subtitle">Drop leakage, clean missing, encode kategori</p>
+                                </div>
+                            </div>
+                            <div class="big-number">{{ dashboard.summary.numeric_count }} / {{ dashboard.summary.categorical_count }}</div>
+                            <div class="muted">Numerik / kategorik</div>
+                            <div class="chip-row">
+                                <span class="chip">Drop NA</span>
+                                <span class="chip">LabelEncoder</span>
+                                <span class="chip">80:20 Split</span>
+                            </div>
+                        </article>
+
+                        <article class="metric-card green">
+                            <div class="metric-head">
+                                <span class="mini-icon"><i class="fa-solid fa-bullseye"></i></span>
+                                <div>
+                                    <p class="metric-title">Model Aktif</p>
+                                    <p class="metric-subtitle">{{ dashboard.summary.model_name }}</p>
+                                </div>
+                            </div>
+                            <div class="big-number">{{ dashboard.metrics.r2 }}</div>
+                            <div class="metric-split">
+                                <span>MAE<strong>{{ dashboard.metrics.mae }}</strong></span>
+                                <span>RMSE<strong>{{ dashboard.metrics.rmse }}</strong></span>
+                                <span>R2<strong>{{ dashboard.metrics.r2 }}</strong></span>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Distribusi Target</h2>
+                        <div class="chart-wrap">
+                            <canvas id="targetChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Feature Importance</h2>
+                        <div class="chart-wrap">
+                            <canvas id="importanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="side-stack">
+                    <article class="side-card">
+                        <h2 class="section-title">Detail Pipeline</h2>
+                        <div class="pipeline-list">
+                            {% for item in dashboard.pipeline %}
+                            <div class="pipeline-item {{ item.state }}">
+                                <span class="step-number">{{ loop.index }}</span>
+                                <div>
+                                    <div class="step-title">{{ item.step }}</div>
+                                    <div class="step-desc">{{ item.desc }}</div>
+                                </div>
+                                <span class="step-state">{% if item.state == 'done' %}OK{% else %}Now{% endif %}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+
+                    <article class="side-card">
+                        <h2 class="section-title">Komponen Model</h2>
+                        <div class="model-list">
+                            {% for item in dashboard.model_cards %}
+                            <div class="model-row">
+                                <span class="dot"></span>
+                                <div>
+                                    <div class="model-name">{{ item.name }}</div>
+                                    <div class="model-desc">{{ item.desc }}</div>
+                                </div>
+                                <div class="model-meta">{{ item.meta }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+                </aside>
+            </section>
+
+            <section id="dataset" class="page">
+                <div>
+                    <h1 class="section-title">Dataset & Preprocessing</h1>
+                    <div class="stat-grid mb-4">
+                        <div class="stat-card"><div class="stat-number">{{ dashboard.summary.total_rows }}</div><div class="muted">Baris mentah</div></div>
+                        <div class="stat-card"><div class="stat-number">{{ dashboard.summary.clean_rows }}</div><div class="muted">Baris setelah drop missing</div></div>
+                        <div class="stat-card"><div class="stat-number">{{ dashboard.target_stats.mean }}</div><div class="muted">Rata-rata target</div></div>
+                        <div class="stat-card"><div class="stat-number">{{ dashboard.target_stats.std }}</div><div class="muted">Std target</div></div>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Kolom Leakage Dihapus</h2>
+                        <div class="chip-row">
+                            {% for col in dashboard.columns_to_drop %}
+                            <span class="chip">{{ col }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Preview Raw Data</h2>
+                        <div class="table-scroll">
+                            <table class="table-dark-custom">
+                                <thead><tr>{% for key in dashboard.raw_head[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+                                <tbody>
+                                    {% for row in dashboard.raw_head %}
+                                    <tr>{% for value in row.values() %}<td>{{ value }}</td>{% endfor %}</tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Preview Data Training Bersih</h2>
+                        <div class="table-scroll">
+                            <table class="table-dark-custom">
+                                <thead><tr>{% for key in dashboard.clean_head[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+                                <tbody>
+                                    {% for row in dashboard.clean_head %}
+                                    <tr>{% for value in row.values() %}<td>{{ value }}</td>{% endfor %}</tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="features" class="page">
+                <div>
+                    <h1 class="section-title">Analisis Fitur</h1>
+                    <div class="panel">
+                        <h2 class="section-title">Korelasi Numerik Dengan Target</h2>
+                        <div class="score-list">
+                            {% for row in dashboard.correlation_rows %}
+                            <div class="score-row">
+                                <div class="score-label">{{ row.feature }}</div>
+                                <div class="score-track">
+                                    <div class="score-fill" style="width: {{ row.width }}%;"></div>
+                                </div>
+                                <div class="score-value">{{ row.correlation }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Ranking Feature Importance</h2>
+                        <table class="table-dark-custom">
+                            <thead><tr><th>Fitur</th><th>Importance</th></tr></thead>
+                            <tbody>
+                                {% for row in dashboard.feature_importance %}
+                                <tr><td>{{ row.feature }}</td><td>{{ row.importance }}</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Ringkasan Fitur Kategorik</h2>
+                        <div class="category-grid">
+                            {% for item in dashboard.categorical_rows %}
+                            <article class="sample-card">
+                                <h4>{{ item.feature }}</h4>
+                                <p class="muted">{{ item.unique }} kategori unik</p>
+                                <table class="table-dark-custom">
+                                    <thead><tr><th>Nilai</th><th>Jumlah</th></tr></thead>
+                                    <tbody>
+                                        {% for row in item.top_values %}
+                                        <tr><td>{{ row.name }}</td><td>{{ row.count }}</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </article>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="metrics" class="page">
+                <div>
+                    <h1 class="section-title">Metrik Latih</h1>
+                    <p class="muted mb-4">Evaluasi mengikuti train_regression.py: split 80:20, random_state=42.</p>
+                    <div class="summary-grid">
+                        <article class="metric-card blue">
+                            <div class="metric-head"><span class="mini-icon"><i class="fa-solid fa-flask"></i></span><div><p class="metric-title">Holdout Split</p><p class="metric-subtitle">Train / test rows</p></div></div>
+                            <div class="big-number">{{ dashboard.summary.train_rows }} / {{ dashboard.summary.test_rows }}</div>
+                            <div class="metric-split"><span>Train<strong>80%</strong></span><span>Test<strong>20%</strong></span><span>Target<strong>% loss</strong></span></div>
+                        </article>
+                        <article class="metric-card violet">
+                            <div class="metric-head"><span class="mini-icon"><i class="fa-solid fa-ruler"></i></span><div><p class="metric-title">Error</p><p class="metric-subtitle">MAE and RMSE</p></div></div>
+                            <div class="big-number">{{ dashboard.metrics.mae }}</div>
+                            <div class="metric-split"><span>MAE<strong>{{ dashboard.metrics.mae }}</strong></span><span>MSE<strong>{{ dashboard.metrics.mse }}</strong></span><span>RMSE<strong>{{ dashboard.metrics.rmse }}</strong></span></div>
+                        </article>
+                        <article class="metric-card green">
+                            <div class="metric-head"><span class="mini-icon"><i class="fa-solid fa-chart-simple"></i></span><div><p class="metric-title">R2 Score</p><p class="metric-subtitle">Explained variance</p></div></div>
+                            <div class="big-number">{{ dashboard.metrics.r2 }}</div>
+                            <div class="metric-split"><span>Min<strong>{{ dashboard.target_stats.min }}</strong></span><span>Median<strong>{{ dashboard.target_stats.median }}</strong></span><span>Max<strong>{{ dashboard.target_stats.max }}</strong></span></div>
+                        </article>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Actual vs Predicted Sample</h2>
+                        <div class="chart-wrap">
+                            <canvas id="residualChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="prediction" class="page">
+                <div>
+                    <h1 class="section-title">Single Test Prediksi</h1>
+                    <p class="muted mb-4">Input diproses memakai encoder dan urutan fitur dari artifact model.</p>
+                    <div class="panel">
+                        <form method="POST" action="/single_test">
+                            <div class="sample-grid">
+                                {% for f in num_features %}
+                                <div>
+                                    <label class="form-label">{{ f|replace('_', ' ') }}</label>
+                                    <input type="number" step="any" class="form-control num-input" name="{{ f }}" required>
+                                </div>
+                                {% endfor %}
+                                {% for f in cat_features %}
+                                <div>
+                                    <label class="form-label">{{ f|replace('_', ' ') }}</label>
+                                    <select class="form-select cat-select" name="{{ f }}" required>
+                                        {% for val in encoders[f].classes_ %}
+                                        <option value="{{ val }}">{{ val }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex gap-3 mt-4 flex-wrap">
+                                <button type="button" class="btn-secondary-custom" id="randomizeBtn"><i class="fa-solid fa-shuffle me-2"></i>Randomize</button>
+                                <button type="submit" class="btn-primary-custom"><i class="fa-solid fa-bolt me-2"></i>Jalankan Prediksi</button>
+                            </div>
+                        </form>
+
+                        {% if prediction is not none %}
+                        <div class="prediction-card">
+                            <p class="prediction-title">{{ prediction }}%</p>
+                            <div class="muted">Estimasi Fertilizer_Loss_Percentage dari XGBoost Regressor.</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <section id="batch" class="page">
+                <div>
+                    <h1 class="section-title">Batch Test CSV</h1>
+                    <p class="muted mb-4">CSV harus memuat seluruh fitur model. Hasil akan ditambah kolom Prediksi_Fertilizer_Loss_%.</p>
+                    <div class="panel">
+                        <form method="POST" action="/batch_test" enctype="multipart/form-data">
+                            <label class="upload-area mb-4" for="fileInput">
+                                <i class="fa-solid fa-file-csv fa-3x" style="color: var(--green);"></i>
+                                <strong>Klik untuk pilih file CSV</strong>
+                                <span class="muted" id="fileName">Format didukung: .csv</span>
+                            </label>
+                            <input class="file-input" type="file" name="file" id="fileInput" accept=".csv" required>
+                            <button class="btn-primary-custom" type="submit"><i class="fa-solid fa-gears me-2"></i>Proses Batch</button>
+                        </form>
+
+                        {% if batch_error %}
+                        <div class="prediction-card" style="border-left-color: var(--danger);">
+                            <p class="prediction-title">Batch gagal</p>
+                            <div class="muted">{{ batch_error }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if batch_result %}
+                        <div class="prediction-card">
+                            <p class="prediction-title">{{ batch_result.rows }} baris diproses</p>
+                            <div class="muted mb-3">{{ batch_result.columns }} kolom dalam hasil prediksi.</div>
+                            <a class="btn-primary-custom d-inline-block text-decoration-none mb-3" href="/download"><i class="fa-solid fa-download me-2"></i>Download CSV</a>
+                            <div class="batch-chart-panel mt-4">
+                                <h2 class="section-title">Grafik Prediksi Batch</h2>
+                                <p class="muted mb-3">Menampilkan maksimal 40 baris pertama dari hasil batch.</p>
+                                <div class="chart-wrap">
+                                    <canvas id="batchPredictionChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="table-scroll">
+                                <table class="table-dark-custom">
+                                    <thead><tr>{% for key in batch_result.preview[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+                                    <tbody>
+                                        {% for row in batch_result.preview %}
+                                        <tr>{% for value in row.values() %}<td>{{ value }}</td>{% endfor %}</tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <section id="report" class="page">
+                <div>
+                    <h1 class="section-title">Laporan Hasil</h1>
+                    <div class="summary-grid">
+                        <article class="metric-card blue">
+                            <div class="metric-head">
+                                <span class="mini-icon"><i class="fa-solid fa-database"></i></span>
+                                <div>
+                                    <p class="metric-title">Dataset Bersih</p>
+                                    <p class="metric-subtitle">Setelah preprocessing train_regression.py</p>
+                                </div>
+                            </div>
+                            <div class="big-number">{{ dashboard.summary.clean_rows }}</div>
+                            <div class="metric-split">
+                                <span>Raw<strong>{{ dashboard.summary.total_rows }}</strong></span>
+                                <span>Fitur<strong>{{ dashboard.summary.feature_count }}</strong></span>
+                                <span>Kategorik<strong>{{ dashboard.summary.categorical_count }}</strong></span>
+                            </div>
+                        </article>
+                        <article class="metric-card violet">
+                            <div class="metric-head">
+                                <span class="mini-icon"><i class="fa-solid fa-ruler-combined"></i></span>
+                                <div>
+                                    <p class="metric-title">Error Model</p>
+                                    <p class="metric-subtitle">Evaluasi pada 20% test split</p>
+                                </div>
+                            </div>
+                            <div class="big-number">{{ dashboard.metrics.rmse }}</div>
+                            <div class="metric-split">
+                                <span>MAE<strong>{{ dashboard.metrics.mae }}</strong></span>
+                                <span>MSE<strong>{{ dashboard.metrics.mse }}</strong></span>
+                                <span>RMSE<strong>{{ dashboard.metrics.rmse }}</strong></span>
+                            </div>
+                        </article>
+                        <article class="metric-card green">
+                            <div class="metric-head">
+                                <span class="mini-icon"><i class="fa-solid fa-chart-line"></i></span>
+                                <div>
+                                    <p class="metric-title">R2 Score</p>
+                                    <p class="metric-subtitle">Kualitas prediksi model regresi</p>
+                                </div>
+                            </div>
+                            <div class="big-number">{{ dashboard.metrics.r2 }}</div>
+                            <div class="metric-split">
+                                <span>Train<strong>{{ dashboard.summary.train_rows }}</strong></span>
+                                <span>Test<strong>{{ dashboard.summary.test_rows }}</strong></span>
+                                <span>Model<strong>XGB</strong></span>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Ringkasan Training</h2>
+                        <p class="muted">Pipeline lokal memakai dataset {{ dashboard.summary.total_rows }} baris, menghapus kolom leakage, membersihkan missing value, encode kategori, lalu memakai XGBoost Regressor untuk target {{ dashboard.summary.target }}.</p>
+                        <div class="chip-row">
+                            <span class="chip">Drop leakage columns</span>
+                            <span class="chip">Drop missing rows</span>
+                            <span class="chip">LabelEncoder</span>
+                            <span class="chip">80:20 split</span>
+                            <span class="chip">XGBoost Regressor</span>
+                        </div>
+                    </div>
+
+                    <div class="sample-grid">
+                        <div class="panel">
+                            <h2 class="section-title">Grafik Metrik Error</h2>
+                            <div class="chart-wrap">
+                                <canvas id="reportMetricChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h2 class="section-title">Distribusi Target</h2>
+                            <div class="chart-wrap">
+                                <canvas id="reportTargetChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sample-grid">
+                        <div class="panel">
+                            <h2 class="section-title">Actual vs Predicted</h2>
+                            <div class="chart-wrap">
+                                <canvas id="reportResidualChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <h2 class="section-title">Top Feature Importance</h2>
+                            <div class="chart-wrap">
+                                <canvas id="reportImportanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">Kesimpulan Model</h2>
+                        <div class="sample-grid">
+                            <div class="sample-card">
+                                <h4>Kesiapan Data</h4>
+                                <p class="muted mb-0">Dataset bersih berisi {{ dashboard.summary.clean_rows }} baris dengan {{ dashboard.summary.feature_count }} fitur aktif. Kolom leakage sudah dikeluarkan sebelum model dipakai.</p>
+                            </div>
+                            <div class="sample-card">
+                                <h4>Performa Prediksi</h4>
+                                <p class="muted mb-0">Model menghasilkan MAE {{ dashboard.metrics.mae }}, RMSE {{ dashboard.metrics.rmse }}, dan R2 {{ dashboard.metrics.r2 }} pada data uji.</p>
+                            </div>
+                            <div class="sample-card">
+                                <h4>Target</h4>
+                                <p class="muted mb-0">Rentang target berada dari {{ dashboard.target_stats.min }} sampai {{ dashboard.target_stats.max }} dengan rata-rata {{ dashboard.target_stats.mean }}.</p>
+                            </div>
+                            <div class="sample-card">
+                                <h4>Fitur Dominan</h4>
+                                <p class="muted mb-0">Feature importance tertinggi: {% if dashboard.feature_importance %}{{ dashboard.feature_importance[0].feature }}{% else %}-{% endif %}.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const dashboard = {{ dashboard | tojson | safe }};
+        const activePage = {{ active_page | tojson | safe }};
+        Chart.defaults.color = '#90999f';
+        Chart.defaults.borderColor = '#2c3338';
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-button').forEach(button => button.classList.remove('active'));
+            const page = document.getElementById(pageId);
+            const button = document.querySelector(`[data-page="${pageId}"]`);
+            if (page) page.classList.add('active');
+            if (button) button.classList.add('active');
+        }
+
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', () => showPage(button.dataset.page));
+        });
+
+        function makeBarChart(id, labels, values, label, color) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            new Chart(canvas, {
+                type: 'bar',
+                data: { labels, datasets: [{ label, data: values, backgroundColor: color, borderRadius: 8 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { maxRotation: 45, minRotation: 0 } },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        makeBarChart(
+            'targetChart',
+            dashboard.target_distribution.map(item => item.label),
+            dashboard.target_distribution.map(item => item.count),
+            'Jumlah Data',
+            '#32df86'
+        );
+
+        makeBarChart(
+            'importanceChart',
+            dashboard.feature_importance.map(item => item.feature),
+            dashboard.feature_importance.map(item => item.importance),
+            'Importance',
+            '#0b7cf5'
+        );
+
+        const residualCanvas = document.getElementById('residualChart');
+        if (residualCanvas) {
+            new Chart(residualCanvas, {
+                type: 'line',
+                data: {
+                    labels: dashboard.residual_sample.map((_, index) => index + 1),
+                    datasets: [
+                        {
+                            label: 'Actual',
+                            data: dashboard.residual_sample.map(item => item.actual),
+                            borderColor: '#32df86',
+                            backgroundColor: '#32df86',
+                            pointBackgroundColor: '#32df86',
+                            pointBorderColor: '#f4f7f8',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            tension: .3
+                        },
+                        {
+                            label: 'Predicted',
+                            data: dashboard.residual_sample.map(item => item.predicted),
+                            borderColor: '#0b7cf5',
+                            backgroundColor: '#0b7cf5',
+                            pointBackgroundColor: '#0b7cf5',
+                            pointBorderColor: '#f4f7f8',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            tension: .3
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        makeBarChart(
+            'reportMetricChart',
+            ['MAE', 'MSE', 'RMSE'],
+            [dashboard.metrics.mae, dashboard.metrics.mse, dashboard.metrics.rmse],
+            'Nilai Error',
+            ['#22c6da', '#8052ff', '#32df86']
+        );
+
+        makeBarChart(
+            'reportTargetChart',
+            dashboard.target_distribution.map(item => item.label),
+            dashboard.target_distribution.map(item => item.count),
+            'Jumlah Data',
+            '#32df86'
+        );
+
+        makeBarChart(
+            'reportImportanceChart',
+            dashboard.feature_importance.slice(0, 8).map(item => item.feature),
+            dashboard.feature_importance.slice(0, 8).map(item => item.importance),
+            'Importance',
+            '#0b7cf5'
+        );
+
+        const reportResidualCanvas = document.getElementById('reportResidualChart');
+        if (reportResidualCanvas) {
+            new Chart(reportResidualCanvas, {
+                type: 'line',
+                data: {
+                    labels: dashboard.residual_sample.map((_, index) => index + 1),
+                    datasets: [
+                        {
+                            label: 'Actual',
+                            data: dashboard.residual_sample.map(item => item.actual),
+                            borderColor: '#32df86',
+                            backgroundColor: '#32df86',
+                            pointBackgroundColor: '#32df86',
+                            pointBorderColor: '#f4f7f8',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            tension: .3
+                        },
+                        {
+                            label: 'Predicted',
+                            data: dashboard.residual_sample.map(item => item.predicted),
+                            borderColor: '#0b7cf5',
+                            backgroundColor: '#0b7cf5',
+                            pointBackgroundColor: '#0b7cf5',
+                            pointBorderColor: '#f4f7f8',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            tension: .3
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        {% if batch_result %}
+        const batchResult = {{ batch_result | tojson | safe }};
+        const batchCanvas = document.getElementById('batchPredictionChart');
+        if (batchCanvas && batchResult.chart_rows.length) {
+            const batchDatasets = [
+                {
+                    label: 'Predicted',
+                    data: batchResult.chart_rows.map(item => item.predicted),
+                    borderColor: '#0b7cf5',
+                    backgroundColor: '#0b7cf5',
+                    pointBackgroundColor: '#0b7cf5',
+                    pointBorderColor: '#f4f7f8',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    tension: .3
+                }
+            ];
+            new Chart(batchCanvas, {
+                type: 'line',
+                data: {
+                    labels: batchResult.chart_rows.map((_, index) => index + 1),
+                    datasets: batchDatasets
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+        {% endif %}
+
+        const randomizeBtn = document.getElementById('randomizeBtn');
+        if (randomizeBtn) {
+            function randomizeForm() {
+                document.querySelectorAll('.num-input').forEach(input => {
+                    input.value = (Math.random() * 90 + 10).toFixed(2);
+                });
+                document.querySelectorAll('.cat-select').forEach(select => {
+                    if (select.options.length) {
+                        select.selectedIndex = Math.floor(Math.random() * select.options.length);
+                    }
+                });
+            }
+            randomizeBtn.addEventListener('click', randomizeForm);
+            randomizeForm();
+        }
+
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        if (fileInput && fileName) {
+            fileInput.addEventListener('change', event => {
+                if (event.target.files.length) fileName.textContent = event.target.files[0].name;
+            });
+        }
+
+        showPage(activePage || 'overview');
+    </script>
+</body>
+</html>
