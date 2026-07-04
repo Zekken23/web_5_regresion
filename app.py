@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 DATA_PATH = 'AgroFertilizerLoss.csv'
 MODEL_PATH = 'xgboost_regression_model.pkl'
-BATCH_RESULT_PATH = os.path.join('static', 'batch_result.csv')
+BATCH_RESULT_PATH = os.path.join('/tmp', 'batch_result.csv')
 
 model_data = joblib.load(MODEL_PATH)
 model = model_data['model']
@@ -258,4 +258,5 @@ def download():
 
 
 if __name__ == '__main__':
-    app.run(port=5010, debug=True)
+    port = int(os.environ.get('PORT', 7860))
+    app.run(host='0.0.0.0', port=port, debug=False)

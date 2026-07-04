@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.git
+.gitignore
+venv/
+static/batch_result.csv

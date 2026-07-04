@@ -1,3 +1,13 @@
+---
+title: Agro Fertilizer Regression
+emoji: 📊
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Web-Based Regression Project (web_5_regresion)
 
 Proyek ini adalah aplikasi berbasis web yang mengimplementasikan model Machine Learning **Regresi** untuk melakukan prediksi atau analisis data. Dikembangkan menggunakan **Python** sebagai backend utama untuk pemrosesan data dan modeling, serta antarmuka web interaktif untuk mempermudah pengguna dalam berinteraksi dengan model.
